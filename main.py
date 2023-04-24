@@ -17,20 +17,29 @@ def trim(img): # サイズ変更
     
     return resized_img
 
-def noiser(img): # ノイズ
-    mean = 0
-    sigma = 10
-    noise = np.random.normal(mean, sigma, img.shape)
-    noised_img = img + noise # add noise
-    return noised_img
+def denoiser(img): # ノイズ除去
+    diameter = 5
+    sigma_color = 8
+    sigma_space = 8
+    radius = 4
+    eps = 16
+    
+    y = img.copy()
+    for _ in range(64):
+        y = cv2.bilateralFilter(y, diameter, sigma_color, sigma_space)
+
+    for _ in range(4):
+        y = cv2.ximgproc.guidedFilter(img, y, radius, eps)
+    
+    return y
 
 def proc(file, output_dir): # 統合処理
     img = cv2.imread(file)
-    noised_img = noiser(img)
-    trimmed_img = trim(noised_img)
+    trimmed_img = trim(img)
+    denoised_img = denoiser(trimmed_img)
     output_path = os.path.join(output_dir, os.path.basename(file))
     print(output_path)
-    cv2.imwrite(output_path, trimmed_img)
+    cv2.imwrite(output_path, denoised_img)
 
 def main():
     parser = argparse.ArgumentParser()
